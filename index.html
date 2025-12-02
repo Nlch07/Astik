@@ -375,30 +375,30 @@
             color: var(--text-secondary);
         }
 
-        .input-actions {
-            display: flex;
-            gap: 8px;
-            margin-left: 8px;
-        }
-
-        .input-btn {
-            background: none;
+        /* ===== ОБНОВЛЕННАЯ КНОПКА ОБНОВЛЕНИЯ ===== */
+        .refresh-btn-mini {
+            background: var(--primary);
             border: none;
             width: 36px;
             height: 36px;
             border-radius: 50%;
+            color: white;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 1.1em;
+            font-size: 1em;
             transition: all var(--transition-fast);
+            margin-left: 8px;
+            flex-shrink: 0;
         }
 
-        .input-btn:active {
-            background: var(--bg-tertiary);
+        .refresh-btn-mini:active {
             transform: scale(0.95);
+        }
+
+        .refresh-btn-mini.loading i {
+            animation: spin 1s linear infinite;
         }
 
         /* ===== SEND BUTTON WITH ANIMATIONS ===== */
@@ -452,46 +452,6 @@
             height: 2px;
             background: linear-gradient(90deg, var(--primary) 0%, transparent 100%);
             opacity: 0.5;
-        }
-
-        /* ===== FLOATING REFRESH BUTTON ===== */
-        .refresh-btn {
-            position: fixed;
-            bottom: 70px;
-            right: 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2em;
-            box-shadow: 0 4px 20px rgba(0, 136, 204, 0.3);
-            transition: all var(--transition-medium);
-            z-index: 800;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        .refresh-btn:active {
-            transform: scale(0.9) translateY(0);
-            animation: none;
-        }
-
-        .refresh-btn.loading i {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         /* ===== NEW MESSAGE INDICATOR ===== */
@@ -602,6 +562,10 @@
             border-radius: 50%;
             border-top-color: var(--primary);
             animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* ===== MODAL SETTINGS ===== */
@@ -726,11 +690,9 @@
                 padding: 8px 12px;
             }
             
-            .refresh-btn {
-                width: 48px;
-                height: 48px;
-                bottom: 65px;
-                right: 12px;
+            .refresh-btn-mini {
+                width: 32px;
+                height: 32px;
             }
         }
 
@@ -819,6 +781,25 @@
                 opacity: 0;
             }
         }
+
+        /* ===== ИКОНКИ ЦВЕТОВ ===== */
+        .color-option {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all var(--transition-fast);
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: var(--text);
+            box-shadow: 0 0 0 2px var(--bg);
+        }
     </style>
 </head>
 <body>
@@ -872,13 +853,12 @@
             <div class="plane-path"></div>
         </div>
 
-        <!-- ===== FLOATING REFRESH BUTTON ===== -->
-        <button class="refresh-btn" id="refreshBtn" onclick="loadMessages(true)">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-
         <!-- ===== GLASS INPUT PANEL ===== -->
         <div class="input-panel">
+            <button class="refresh-btn-mini" id="refreshBtn" onclick="loadMessages(true)">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            
             <div class="input-wrapper">
                 <textarea 
                     class="message-input" 
@@ -886,15 +866,8 @@
                     placeholder="Введите сообщение..."
                     rows="1"
                 ></textarea>
-                <div class="input-actions">
-                    <button class="input-btn" id="emojiBtn">
-                        <i class="far fa-smile"></i>
-                    </button>
-                    <button class="input-btn" id="attachBtn">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-                </div>
             </div>
+            
             <button class="send-btn" id="sendBtn">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -1124,7 +1097,14 @@
             const container = document.getElementById('messagesContainer');
             const emptyChat = container.querySelector('.empty-chat');
             
-            if (messages.length === 0) {
+            // Фильтруем сообщения старше 24 часов
+            const now = Date.now();
+            const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+            const filteredMessages = messages.filter(msg => {
+                return msg.timestamp && msg.timestamp > twentyFourHoursAgo;
+            });
+            
+            if (filteredMessages.length === 0) {
                 if (!emptyChat) {
                     container.innerHTML = `
                         <div class="empty-chat">
@@ -1133,7 +1113,7 @@
                             </div>
                             <div class="empty-title">Чат пуст</div>
                             <div class="empty-subtitle">
-                                Напишите первое сообщение и нажмите кнопку обновления ↻ чтобы увидеть его здесь!
+                                Напишите первое сообщение!
                             </div>
                         </div>
                     `;
@@ -1147,7 +1127,7 @@
             }
             
             // Показываем только последние 30 сообщений для производительности
-            const recentMessages = messages.slice(-30);
+            const recentMessages = filteredMessages.slice(-30);
             
             let html = '';
             let lastDate = '';
@@ -1251,6 +1231,25 @@
             document.getElementById('newMessageIndicator').classList.remove('show');
         }
         
+        // ===== УДАЛЕНИЕ СТАРЫХ СООБЩЕНИЙ =====
+        function cleanupOldMessages(messages) {
+            const now = Date.now();
+            const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+            
+            // Фильтруем сообщения
+            const freshMessages = messages.filter(msg => {
+                return msg.timestamp && msg.timestamp > twentyFourHoursAgo;
+            });
+            
+            // Возвращаем только если были изменения
+            if (freshMessages.length !== messages.length) {
+                console.log(`Удалено ${messages.length - freshMessages.length} старых сообщений`);
+                return freshMessages;
+            }
+            
+            return messages;
+        }
+        
         // ===== РАБОТА С ДАННЫМИ =====
         async function loadMessages(showLoading = false) {
             if (appState.isLoading) {
@@ -1282,7 +1281,15 @@
                 if (!response.ok) throw new Error('Ошибка загрузки');
                 
                 const data = await response.json();
-                const messages = data.record.messages || [];
+                let messages = data.record.messages || [];
+                
+                // Очищаем старые сообщения (старше 24 часов)
+                messages = cleanupOldMessages(messages);
+                
+                // Если были удалены старые сообщения, обновляем на сервере
+                if (messages.length !== (data.record.messages || []).length) {
+                    await saveMessagesToServer(messages);
+                }
                 
                 // Сохраняем в кэш
                 appState.messageCache = messages;
@@ -1296,7 +1303,7 @@
                 updateConnectionStatus(true);
                 
                 // Уведомление
-                const newMessages = messages.length - appState.lastMessageCount;
+                const newMessages = messages.length - (appState.lastMessageCount || 0);
                 if (newMessages > 0 && appState.lastMessageCount > 0) {
                     showToast(`Загружено ${newMessages} новых сообщений`, "success");
                 } else {
@@ -1319,6 +1326,38 @@
             } finally {
                 appState.isLoading = false;
                 refreshBtn.classList.remove('loading');
+            }
+        }
+        
+        async function saveMessagesToServer(messages) {
+            try {
+                const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY,
+                        'X-Bin-Versioning': 'false'
+                    },
+                    body: JSON.stringify({
+                        messages: messages,
+                        settings: {
+                            maxMessages: 50,
+                            lastUpdate: Date.now(),
+                            messageCount: messages.length,
+                            version: "2.0",
+                            autoCleanup: true
+                        }
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    console.log("Старые сообщения удалены с сервера");
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error("Ошибка при удалении старых сообщений:", error);
+                return false;
             }
         }
         
@@ -1372,13 +1411,16 @@
                 });
                 
                 const data = await response.json();
-                const messages = data.record.messages || [];
+                let messages = data.record.messages || [];
                 
                 // Обновляем статус сообщения
                 tempMessage.status = 'delivered';
                 
                 // Добавляем новое сообщение
                 messages.push(tempMessage);
+                
+                // Очищаем старые сообщения
+                messages = cleanupOldMessages(messages);
                 
                 // Ограничиваем количество сообщений
                 if (messages.length > 50) {
@@ -1399,7 +1441,8 @@
                             maxMessages: 50,
                             lastUpdate: Date.now(),
                             messageCount: messages.length,
-                            version: "2.0"
+                            version: "2.0",
+                            autoCleanup: true
                         }
                     })
                 });
@@ -1477,11 +1520,18 @@
         
         // ===== НАСТРОЙКИ =====
         function updateStats() {
-            document.getElementById('totalMessages').textContent = appState.messageCache.length;
-            document.getElementById('myMessages').textContent = appState.messageCache.filter(m => m.userId === appState.userId).length;
+            // Фильтруем только сообщения младше 24 часов для статистики
+            const now = Date.now();
+            const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+            const recentMessages = appState.messageCache.filter(msg => 
+                msg.timestamp && msg.timestamp > twentyFourHoursAgo
+            );
+            
+            document.getElementById('totalMessages').textContent = recentMessages.length;
+            document.getElementById('myMessages').textContent = recentMessages.filter(m => m.userId === appState.userId).length;
             
             // Уникальные пользователи
-            const uniqueUsers = new Set(appState.messageCache.map(m => m.user)).size;
+            const uniqueUsers = new Set(recentMessages.map(m => m.user)).size;
             document.getElementById('uniqueUsers').textContent = uniqueUsers;
             
             document.getElementById('requestsUsed').textContent = appState.requestCount;
@@ -1618,6 +1668,18 @@
             
             // Обновляем статистику
             updateStats();
+            
+            // Запускаем автоматическую очистку каждые 10 минут
+            setInterval(() => {
+                if (appState.messageCache.length > 0) {
+                    const cleanedMessages = cleanupOldMessages(appState.messageCache);
+                    if (cleanedMessages.length !== appState.messageCache.length) {
+                        appState.messageCache = cleanedMessages;
+                        displayMessages(cleanedMessages);
+                        console.log("Автоматическая очистка старых сообщений");
+                    }
+                }
+            }, 10 * 60 * 1000); // 10 минут
         }
         
         function setupEventListeners() {
