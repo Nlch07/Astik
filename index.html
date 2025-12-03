@@ -1149,60 +1149,60 @@
         </div>
 
         <!-- ===== ADMIN MODAL ===== -->
-        <div class="modal-overlay" id="adminModal">
-            <div class="modal admin-modal">
-                <div class="modal-header">
-                    <div class="modal-title"><i class="fas fa-shield-alt"></i> Режим администратора</div>
-                    <button class="modal-close" onclick="closeAdminModal()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="modal-body">
-                    <div class="admin-status" id="adminStatus"></div>
-                    
-                    <div id="adminLoginForm">
-                        <p style="margin-bottom: 15px; color: var(--text-secondary);">
-                            Введите пароль для доступа к функциям администратора
-                        </p>
-                        <input 
-                            type="password" 
-                            class="password-input" 
-                            id="adminPassword" 
-                            placeholder="Введите пароль"
-                            maxlength="10"
-                            onkeypress="if(event.key === 'Enter') loginAdmin()"
-                        >
-                        <button class="send-btn" style="width: 100%; border-radius: 12px;" onclick="loginAdmin()">
-                            <i class="fas fa-sign-in-alt"></i> Войти
+<div class="modal-overlay" id="adminModal">
+    <div class="modal admin-modal">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-shield-alt"></i> Режим администратора</div>
+            <button class="modal-close" onclick="closeAdminModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="admin-status" id="adminStatus"></div>
+            
+            <div id="adminLoginForm">
+                <p style="margin-bottom: 15px; color: var(--text-secondary);">
+                    Введите пароль для доступа к функциям администратора
+                </p>
+                <input 
+                    type="password" 
+                    class="password-input" 
+                    id="adminPassword" 
+                    placeholder="Введите пароль"
+                    maxlength="10"
+                    onkeypress="if(event.key === 'Enter') loginAdmin()"
+                >
+                <button class="send-btn" style="width: 100%; border-radius: 12px;" onclick="loginAdmin()">
+                    <i class="fas fa-sign-in-alt"></i> Войти
+                </button>
+            </div>
+            
+            <div id="adminControls" style="display: none;">
+                <div style="margin-bottom: 20px;">
+                    <p style="font-weight: 500; margin-bottom: 10px;">Функции администратора:</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="send-btn" style="width: 100%; border-radius: 12px; background: var(--admin);" onclick="toggleAdminMode()">
+                            <i class="fas fa-trash"></i> Включить удаление сообщений
+                        </button>
+                        <button class="send-btn" style="width: 100%; border-radius: 12px; background: var(--warning);" onclick="clearAllMessages()">
+                            <i class="fas fa-eraser"></i> Очистить весь чат
                         </button>
                     </div>
-                    
-                    <div id="adminControls" style="display: none;">
-                        <div style="margin-bottom: 20px;">
-                            <p style="font-weight: 500; margin-bottom: 10px;">Функции администратора:</p>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <button class="send-btn" style="width: 100%; border-radius: 12px; background: var(--admin);" onclick="toggleAdminMode()">
-                                    <i class="fas fa-trash"></i> Включить удаление сообщений
-                                </button>
-                                <button class="send-btn" style="width: 100%; border-radius: 12px; background: var(--warning);" onclick="clearAllMessages()">
-                                    <i class="fas fa-eraser"></i> Очистить весь чат
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px;">
-                            <p style="font-weight: 500; margin-bottom: 10px;">Информация:</p>
-                            <p style="font-size: 0.9em; color: var(--text-secondary);">
-                                • В режиме администратора появится кнопка для удаления сообщений<br>
-                                • Пароль администратора: <strong>25</strong><br>
-                                • Будьте осторожны! Удаленные сообщения нельзя восстановить
-                            </p>
-                        </div>
-                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px;">
+                    <p style="font-weight: 500; margin-bottom: 10px;">Информация:</p>
+                    <p style="font-size: 0.9em; color: var(--text-secondary);">
+                        • В режиме администратора появится кнопка для удаления сообщений<br>
+                        • Пароль администратора: <strong>25</strong><br>
+                        • Будьте осторожны! Удаленные сообщения нельзя восстановить
+                    </p>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- ===== SETTINGS MODAL ===== -->
         <div class="modal-overlay" id="settingsModal">
