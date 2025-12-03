@@ -120,25 +120,6 @@
             gap: 16px;
         }
 
-        .back-btn {
-            background: none;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            font-size: 1.2em;
-            cursor: pointer;
-            transition: background-color var(--transition-fast);
-        }
-
-        .back-btn:active {
-            background: var(--bg-tertiary);
-        }
-
         .chat-info {
             display: flex;
             flex-direction: column;
@@ -297,14 +278,15 @@
             color: var(--text);
         }
 
-        /* ===== ГОЛОСОВЫЕ СООБЩЕНИЯ ===== */
+        /* ===== УЛУЧШЕННЫЕ ГОЛОСОВЫЕ СООБЩЕНИЯ ===== */
         .voice-message {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 12px 16px;
-            min-width: 120px;
+            min-width: 180px;
             cursor: pointer;
+            user-select: none;
         }
 
         .voice-play-btn {
@@ -319,6 +301,11 @@
             color: white;
             cursor: pointer;
             transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+
+        .voice-play-btn:hover {
+            transform: scale(1.05);
         }
 
         .voice-play-btn.playing {
@@ -327,18 +314,22 @@
 
         .voice-play-btn i {
             font-size: 0.9em;
+            margin-left: 2px;
         }
 
         .voice-duration {
             font-size: 0.85em;
             color: var(--text);
             min-width: 40px;
+            font-weight: 500;
         }
 
         .voice-waveform {
             flex: 1;
-            height: 24px;
+            height: 36px;
             position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .voice-wave {
@@ -354,14 +345,27 @@
         .voice-bar {
             flex: 1;
             background: var(--primary);
-            border-radius: 1px;
+            border-radius: 2px;
             opacity: 0.6;
-            transition: height 0.1s ease;
+            transition: all 0.2s ease;
+            min-height: 4px;
         }
 
         .voice-bar.active {
             opacity: 1;
             background: var(--accent);
+        }
+
+        .voice-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(0, 136, 204, 0.1);
+            width: 0%;
+            transition: width 0.1s linear;
+            pointer-events: none;
+            border-radius: 2px;
         }
 
         .voice-recording {
@@ -636,21 +640,6 @@
         }
 
         /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
-        .paper-plane {
-            position: fixed;
-            pointer-events: none;
-            z-index: 10000;
-            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-
-        .plane-path {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary) 0%, transparent 100%);
-            opacity: 0.5;
-        }
-
         .new-message-indicator {
             position: fixed;
             bottom: 130px;
@@ -914,16 +903,12 @@
 </head>
 <body>
     <div class="mobile-container">
-        <!-- ===== HEADER ===== -->
+        <!-- ===== УПРОЩЕННЫЙ HEADER ===== -->
         <div class="header">
             <div class="header-left">
-                <button class="back-btn" id="backBtn">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
                 <div class="chat-info">
                     <div class="chat-title">Astik Messenger</div>
                     <div class="chat-status">
-                        <div class="status-dot"></div>
                         <span id="connectionStatus">Подключено</span>
                     </div>
                 </div>
@@ -934,7 +919,6 @@
                 </button>
                 <button class="header-btn" id="settingsBtn">
                     <i class="fas fa-cog"></i>
-                    <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
                 </button>
             </div>
         </div>
@@ -968,12 +952,6 @@
             <span>Новые сообщения</span>
         </div>
 
-        <!-- ===== PAPER PLANE ===== -->
-        <div class="paper-plane hidden" id="paperPlane">
-            <i class="fas fa-paper-plane" style="color: var(--primary); font-size: 24px;"></i>
-            <div class="plane-path"></div>
-        </div>
-
         <!-- ===== УВЕДОМЛЕНИЕ ===== -->
         <div class="notification" id="notification">
             <i class="fas fa-bell"></i>
@@ -994,7 +972,7 @@
                 <textarea 
                     class="message-input" 
                     id="messageInput" 
-                    placeholder="Введите сообщение или удерживайте микрофон..."
+                    placeholder="Введите сообщение"
                     rows="1"
                 ></textarea>
             </div>
@@ -1105,7 +1083,9 @@
             mediaRecorder: null,
             audioChunks: [],
             recordingStartTime: null,
-            currentAudio: null
+            currentAudio: null,
+            currentPlayingMessage: null,
+            audioProgress: {}
         };
         
         // ===== ОСНОВНЫЕ ФУНКЦИИ =====
@@ -1153,10 +1133,6 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
-            
-            // Обновляем бейдж уведомлений
-            appState.unreadNotifications++;
-            updateNotificationBadge();
         }
         
         function playNotificationSound() {
@@ -1169,18 +1145,7 @@
             }
         }
         
-        function updateNotificationBadge() {
-            const badge = document.getElementById('notificationBadge');
-            if (appState.unreadNotifications > 0) {
-                badge.textContent = appState.unreadNotifications;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
-            }
-            localStorage.setItem('unreadNotifications', appState.unreadNotifications);
-        }
-        
-        // ===== ГОЛОСОВЫЕ СООБЩЕНИЯ =====
+        // ===== УЛУЧШЕННЫЕ ГОЛОСОВЫЕ СООБЩЕНИЯ =====
         async function startRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1199,7 +1164,7 @@
                     await sendVoiceMessage(audioBlob);
                     
                     // Останавливаем все треки
-            stream.getTracks().forEach(track => track.stop());
+                    stream.getTracks().forEach(track => track.stop());
                     
                     // Сбрасываем состояние
                     appState.isRecording = false;
@@ -1327,44 +1292,92 @@
             }
         }
         
+        // ===== УЛУЧШЕННАЯ ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ГОЛОСОВЫХ =====
         function playVoiceMessage(blobUrl, messageId) {
-            // Останавливаем текущее воспроизведение
-            if (appState.currentAudio) {
+            // Если уже воспроизводится это же сообщение - ставим на паузу
+            if (appState.currentPlayingMessage === messageId && appState.currentAudio) {
                 appState.currentAudio.pause();
-                const prevBtn = document.querySelector(`[data-id="${appState.currentAudio.messageId}"] .voice-play-btn`);
+                return;
+            }
+            
+            // Останавливаем текущее воспроизведение другого сообщения
+            if (appState.currentAudio && appState.currentPlayingMessage !== messageId) {
+                appState.currentAudio.pause();
+                const prevBtn = document.querySelector(`[data-id="${appState.currentPlayingMessage}"] .voice-play-btn`);
                 if (prevBtn) {
                     prevBtn.classList.remove('playing');
                     prevBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    animateVoiceWave(appState.currentPlayingMessage, false);
                 }
             }
             
+            // Если сообщение уже воспроизводилось, продолжаем с того же места
+            const currentTime = appState.audioProgress[messageId] || 0;
+            
             // Создаем новый аудио объект
             const audio = new Audio(blobUrl);
-            audio.messageId = messageId;
+            audio.currentTime = currentTime;
             appState.currentAudio = audio;
+            appState.currentPlayingMessage = messageId;
             
             const playBtn = document.querySelector(`[data-id="${messageId}"] .voice-play-btn`);
+            const progressBar = document.querySelector(`[data-id="${messageId}"] .voice-progress`);
             
             audio.onplay = () => {
                 playBtn.classList.add('playing');
                 playBtn.innerHTML = '<i class="fas fa-pause"></i>';
                 animateVoiceWave(messageId, true);
+                
+                // Запускаем обновление прогресса
+                updateAudioProgress(messageId, audio, progressBar);
             };
             
             audio.onpause = () => {
                 playBtn.classList.remove('playing');
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
                 animateVoiceWave(messageId, false);
+                
+                // Сохраняем прогресс
+                appState.audioProgress[messageId] = audio.currentTime;
             };
             
             audio.onended = () => {
                 playBtn.classList.remove('playing');
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
                 animateVoiceWave(messageId, false);
+                
+                // Сбрасываем прогресс
+                appState.audioProgress[messageId] = 0;
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+                
                 appState.currentAudio = null;
+                appState.currentPlayingMessage = null;
             };
             
+            // Начинаем воспроизведение
             audio.play();
+        }
+        
+        function updateAudioProgress(messageId, audio, progressBar) {
+            if (!audio || audio.paused) return;
+            
+            const update = () => {
+                if (progressBar && !isNaN(audio.duration)) {
+                    const percent = (audio.currentTime / audio.duration) * 100;
+                    progressBar.style.width = percent + '%';
+                }
+                
+                // Сохраняем текущее время
+                appState.audioProgress[messageId] = audio.currentTime;
+                
+                if (!audio.ended && !audio.paused) {
+                    requestAnimationFrame(update);
+                }
+            };
+            
+            requestAnimationFrame(update);
         }
         
         function animateVoiceWave(messageId, isPlaying) {
@@ -1376,12 +1389,17 @@
             if (isPlaying) {
                 bars.forEach((bar, index) => {
                     bar.classList.add('active');
-                    bar.style.animation = `wavePulse ${0.5 + index * 0.1}s infinite alternate`;
+                    // Создаем волну с разной амплитудой
+                    const amplitude = Math.sin(Date.now() / 200 + index * 0.5) * 10 + 15;
+                    bar.style.height = amplitude + 'px';
                 });
+                
+                // Продолжаем анимацию
+                setTimeout(() => animateVoiceWave(messageId, isPlaying), 100);
             } else {
                 bars.forEach(bar => {
                     bar.classList.remove('active');
-                    bar.style.animation = '';
+                    bar.style.height = '15px';
                 });
             }
         }
@@ -1421,7 +1439,10 @@
                 const isOwn = msg.userId === appState.userId;
                 
                 if (msg.type === 'voice') {
-                    // Голосовое сообщение
+                    // Улучшенное голосовое сообщение
+                    const isPlaying = appState.currentPlayingMessage === msg.id;
+                    const playIcon = isPlaying ? 'fa-pause' : 'fa-play';
+                    
                     html += `
                         <div class="message ${isOwn ? 'own' : 'other'}" data-id="${msg.id}">
                             <div class="message-header">
@@ -1430,14 +1451,15 @@
                             </div>
                             <div class="message-bubble" style="${isOwn ? `background: ${appState.userColor}` : ''}">
                                 <div class="voice-message" onclick="playVoiceMessage('${msg.blobUrl}', '${msg.id}')">
-                                    <button class="voice-play-btn">
-                                        <i class="fas fa-play"></i>
+                                    <button class="voice-play-btn ${isPlaying ? 'playing' : ''}">
+                                        <i class="fas ${playIcon}"></i>
                                     </button>
                                     <span class="voice-duration">${msg.duration || 0}s</span>
                                     <div class="voice-waveform">
+                                        <div class="voice-progress"></div>
                                         <div class="voice-wave">
                                             ${Array.from({length: 20}, (_, i) => 
-                                                `<div class="voice-bar" style="height: ${Math.random() * 20 + 5}px;"></div>`
+                                                `<div class="voice-bar" style="height: ${Math.random() * 10 + 10}px;"></div>`
                                             ).join('')}
                                         </div>
                                     </div>
@@ -1509,8 +1531,6 @@
                 );
                 
                 if (newMessages.length > 0 && !isAtBottom()) {
-                    appState.unreadNotifications += newMessages.length;
-                    updateNotificationBadge();
                     showNotification(`Новых сообщений: ${newMessages.length}`, "info");
                 }
                 
@@ -1662,8 +1682,6 @@
             });
             
             document.getElementById('settingsModal').classList.add('show');
-            appState.unreadNotifications = 0;
-            updateNotificationBadge();
         }
         
         function closeSettings() {
@@ -1720,9 +1738,6 @@
             
             // Загрузка кэша
             loadFromCache();
-            
-            // Обновление бейджа
-            updateNotificationBadge();
             
             // Установка обработчиков
             setupEventListeners();
@@ -1802,11 +1817,6 @@
             // Остальные кнопки
             document.getElementById('themeToggle').addEventListener('click', toggleTheme);
             document.getElementById('settingsBtn').addEventListener('click', openSettings);
-            document.getElementById('backBtn').addEventListener('click', () => {
-                if (confirm('Выйти из чата?')) {
-                    window.close();
-                }
-            });
             
             // Выбор цвета
             document.querySelectorAll('.color-option').forEach(option => {
