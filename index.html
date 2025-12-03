@@ -27,6 +27,7 @@
             --error: #ff3b30;
             --online: #00d465;
             --voice: #0088cc;
+            --admin: #ff3b30;
             
             /* Анимации */
             --transition-fast: 0.15s ease;
@@ -54,6 +55,7 @@
             --error: #ff3b30;
             --online: #00d465;
             --voice: #53bdeb;
+            --admin: #ff3b30;
         }
 
         /* ===== RESET & BASE ===== */
@@ -94,6 +96,72 @@
             background: var(--bg);
         }
 
+        /* ===== ПАНЕЛЬ ОНЛАЙН ===== */
+        .online-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 999;
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--success);
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transform: translateY(-100%);
+            transition: transform var(--transition-medium);
+            box-shadow: 0 2px 10px rgba(0, 168, 132, 0.3);
+        }
+
+        .online-panel.show {
+            transform: translateY(0);
+        }
+
+        .online-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+            animation: onlinePulse 1.5s infinite;
+        }
+
+        @keyframes onlinePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .online-text {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .online-close {
+            background: none;
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color var(--transition-fast);
+        }
+
+        .online-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         /* ===== GLASS HEADER ===== */
         .header {
             position: fixed;
@@ -112,6 +180,10 @@
             align-items: center;
             justify-content: space-between;
             min-height: 60px;
+        }
+
+        .with-online-panel {
+            top: 40px;
         }
 
         .header-left {
@@ -176,6 +248,11 @@
             background: var(--bg-tertiary);
         }
 
+        .header-btn.admin-active {
+            background: var(--admin);
+            color: white;
+        }
+
         /* ===== MESSAGES AREA ===== */
         .messages-area {
             flex: 1;
@@ -185,6 +262,10 @@
             display: flex;
             flex-direction: column;
             position: relative;
+        }
+
+        .with-online-panel + .messages-area {
+            padding-top: 110px;
         }
 
         .messages-container {
@@ -217,6 +298,7 @@
             max-width: 85%;
             margin-bottom: 4px;
             animation: messageAppear 0.25s ease-out;
+            position: relative;
         }
 
         @keyframes messageAppear {
@@ -276,6 +358,36 @@
             background: var(--own-message-bg);
             border-top-right-radius: 0;
             color: var(--text);
+        }
+
+        /* ===== КНОПКА УДАЛЕНИЯ ===== */
+        .message-delete-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--error);
+            color: white;
+            border: none;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            cursor: pointer;
+            z-index: 10;
+            transition: all var(--transition-fast);
+        }
+
+        .message:hover .message-delete-btn,
+        .message.admin-mode .message-delete-btn {
+            display: flex;
+        }
+
+        .message-delete-btn:hover {
+            transform: scale(1.1);
+            background: #ff0000;
         }
 
         /* ===== УЛУЧШЕННЫЕ ГОЛОСОВЫЕ СООБЩЕНИЯ ===== */
@@ -884,6 +996,49 @@
             to { height: 40px; opacity: 1; }
         }
 
+        /* ===== ADMIN MODAL ===== */
+        .admin-modal .modal-title {
+            color: var(--admin);
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text);
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: border-color var(--transition-fast);
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .admin-status {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .admin-status.success {
+            background: rgba(0, 168, 132, 0.2);
+            color: var(--success);
+            display: block;
+        }
+
+        .admin-status.error {
+            background: rgba(255, 59, 48, 0.2);
+            color: var(--error);
+            display: block;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 380px) {
             .header {
@@ -903,8 +1058,19 @@
 </head>
 <body>
     <div class="mobile-container">
-        <!-- ===== УПРОЩЕННЫЙ HEADER ===== -->
-        <div class="header">
+        <!-- ===== ПАНЕЛЬ ОНЛАЙН ===== -->
+        <div class="online-panel" id="onlinePanel">
+            <div class="online-user">
+                <div class="online-dot"></div>
+                <span class="online-text" id="onlineUser"></span>
+            </div>
+            <button class="online-close" onclick="hideOnlinePanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- ===== HEADER ===== -->
+        <div class="header" id="header">
             <div class="header-left">
                 <div class="chat-info">
                     <div class="chat-title">Astik Messenger</div>
@@ -914,6 +1080,9 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button class="header-btn" id="adminBtn" title="Режим администратора">
+                    <i class="fas fa-shield-alt"></i>
+                </button>
                 <button class="header-btn" id="themeToggle">
                     <i class="fas fa-moon"></i>
                 </button>
@@ -980,6 +1149,62 @@
             <button class="send-btn" id="sendBtn">
                 <i class="fas fa-paper-plane"></i>
             </button>
+        </div>
+
+        <!-- ===== ADMIN MODAL ===== -->
+        <div class="modal-overlay" id="adminModal">
+            <div class="modal admin-modal">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-shield-alt"></i> Режим администратора</div>
+                    <button class="modal-close" onclick="closeAdminModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="admin-status" id="adminStatus"></div>
+                    
+                    <div id="adminLoginForm">
+                        <p style="margin-bottom: 15px; color: var(--text-secondary);">
+                            Введите пароль для доступа к функциям администратора
+                        </p>
+                        <input 
+                            type="password" 
+                            class="password-input" 
+                            id="adminPassword" 
+                            placeholder="Введите пароль"
+                            maxlength="10"
+                            onkeypress="if(event.key === 'Enter') loginAdmin()"
+                        >
+                        <button class="send-btn" style="width: 100%; border-radius: 12px;" onclick="loginAdmin()">
+                            <i class="fas fa-sign-in-alt"></i> Войти
+                        </button>
+                    </div>
+                    
+                    <div id="adminControls" style="display: none;">
+                        <div style="margin-bottom: 20px;">
+                            <p style="font-weight: 500; margin-bottom: 10px;">Функции администратора:</p>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="send-btn" style="width: 100%; border-radius: 12px; background: var(--admin);" onclick="toggleAdminMode()">
+                                    <i class="fas fa-trash"></i> Включить удаление сообщений
+                                </button>
+                                <button class="send-btn" style="width: 100%; border-radius: 12px; background: var(--warning);" onclick="clearAllMessages()">
+                                    <i class="fas fa-eraser"></i> Очистить весь чат
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 12px;">
+                            <p style="font-weight: 500; margin-bottom: 10px;">Информация:</p>
+                            <p style="font-size: 0.9em; color: var(--text-secondary);">
+                                • В режиме администратора появится кнопка для удаления сообщений<br>
+                                • Пароль администратора: <strong>25</strong><br>
+                                • Будьте осторожны! Удаленные сообщения нельзя восстановить
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ===== SETTINGS MODAL ===== -->
@@ -1063,6 +1288,7 @@
         // ===== КОНФИГУРАЦИЯ =====
         const CHAT_BIN_ID = '6929f844d0ea881f400654bb';
         const API_KEY = '$2a$10$HMxMwoPKiOtVWm/jzd1MoeGqMRHVlcqEnIngig1Am1kUTEqGIxXdm';
+        const ADMIN_PASSWORD = '25';
         
         // ===== СОСТОЯНИЕ ПРИЛОЖЕНИЯ =====
         const appState = {
@@ -1085,7 +1311,13 @@
             recordingStartTime: null,
             currentAudio: null,
             currentPlayingMessage: null,
-            audioProgress: {}
+            audioProgress: {},
+            // Новые свойства
+            isAdmin: localStorage.getItem('isAdmin') === 'true',
+            adminMode: false,
+            onlineUsers: {},
+            lastActivityTime: Date.now(),
+            onlineTimer: null
         };
         
         // ===== ОСНОВНЫЕ ФУНКЦИИ =====
@@ -1096,6 +1328,210 @@
                 localStorage.setItem('chatUserId', id);
             }
             return id;
+        }
+        
+        // ===== ПАНЕЛЬ ОНЛАЙН =====
+        function updateOnlineStatus() {
+            appState.lastActivityTime = Date.now();
+            
+            if (appState.onlineTimer) {
+                clearTimeout(appState.onlineTimer);
+            }
+            
+            // Показываем панель онлайн
+            const onlinePanel = document.getElementById('onlinePanel');
+            const onlineUser = document.getElementById('onlineUser');
+            const header = document.getElementById('header');
+            
+            onlineUser.textContent = `${appState.userName} онлайн`;
+            onlinePanel.classList.add('show');
+            header.classList.add('with-online-panel');
+            
+            // Скрываем панель через 60 секунд бездействия
+            appState.onlineTimer = setTimeout(() => {
+                hideOnlinePanel();
+            }, 60000); // 60 секунд
+        }
+        
+        function hideOnlinePanel() {
+            const onlinePanel = document.getElementById('onlinePanel');
+            const header = document.getElementById('header');
+            
+            onlinePanel.classList.remove('show');
+            header.classList.remove('with-online-panel');
+            
+            if (appState.onlineTimer) {
+                clearTimeout(appState.onlineTimer);
+            }
+        }
+        
+        // ===== АДМИНИСТРАТОР =====
+        function showAdminModal() {
+            const adminModal = document.getElementById('adminModal');
+            const adminStatus = document.getElementById('adminStatus');
+            const adminLoginForm = document.getElementById('adminLoginForm');
+            const adminControls = document.getElementById('adminControls');
+            
+            adminStatus.className = 'admin-status';
+            adminStatus.style.display = 'none';
+            
+            if (appState.isAdmin) {
+                adminLoginForm.style.display = 'none';
+                adminControls.style.display = 'block';
+            } else {
+                adminLoginForm.style.display = 'block';
+                adminControls.style.display = 'none';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
+            }
+            
+            adminModal.classList.add('show');
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('show');
+        }
+        
+        function loginAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            const adminStatus = document.getElementById('adminStatus');
+            
+            if (password === ADMIN_PASSWORD) {
+                appState.isAdmin = true;
+                localStorage.setItem('isAdmin', 'true');
+                
+                adminStatus.textContent = '✓ Доступ администратора предоставлен!';
+                adminStatus.className = 'admin-status success';
+                adminStatus.style.display = 'block';
+                
+                document.getElementById('adminLoginForm').style.display = 'none';
+                document.getElementById('adminControls').style.display = 'block';
+                
+                // Обновляем кнопку в хедере
+                document.getElementById('adminBtn').classList.add('admin-active');
+                
+                setTimeout(() => {
+                    showNotification('Режим администратора активирован', 'success');
+                }, 300);
+            } else {
+                adminStatus.textContent = '✗ Неверный пароль!';
+                adminStatus.className = 'admin-status error';
+                adminStatus.style.display = 'block';
+                
+                // Анимация ошибки
+                const input = document.getElementById('adminPassword');
+                input.style.borderColor = 'var(--error)';
+                setTimeout(() => {
+                    input.style.borderColor = '';
+                }, 500);
+            }
+        }
+        
+        function toggleAdminMode() {
+            appState.adminMode = !appState.adminMode;
+            
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(msg => {
+                if (appState.adminMode) {
+                    msg.classList.add('admin-mode');
+                } else {
+                    msg.classList.remove('admin-mode');
+                }
+            });
+            
+            if (appState.adminMode) {
+                showNotification('Режим удаления сообщений включен', 'warning');
+            } else {
+                showNotification('Режим удаления сообщений выключен', 'info');
+            }
+            
+            closeAdminModal();
+        }
+        
+        async function deleteMessage(messageId) {
+            if (!appState.isAdmin || !appState.adminMode) return;
+            
+            if (!confirm('Удалить это сообщение?')) return;
+            
+            try {
+                // Загружаем текущие сообщения
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                
+                const data = await response.json();
+                let messages = data.record.messages || [];
+                
+                // Удаляем сообщение
+                messages = messages.filter(msg => msg.id !== messageId);
+                
+                // Обновляем на сервере
+                const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY,
+                        'X-Bin-Versioning': 'false'
+                    },
+                    body: JSON.stringify({
+                        messages: messages,
+                        settings: {
+                            lastUpdate: Date.now(),
+                            messageCount: messages.length,
+                            version: "2.2"
+                        }
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    // Обновляем локальный кэш
+                    appState.messageCache = appState.messageCache.filter(msg => msg.id !== messageId);
+                    displayMessages(appState.messageCache);
+                    
+                    showNotification('Сообщение удалено', 'success');
+                }
+            } catch (error) {
+                console.error('Ошибка удаления:', error);
+                showNotification('Ошибка удаления', 'error');
+            }
+        }
+        
+        async function clearAllMessages() {
+            if (!appState.isAdmin) return;
+            
+            if (!confirm('ВНИМАНИЕ! Вы собираетесь удалить ВСЕ сообщения в чате. Это действие нельзя отменить. Продолжить?')) {
+                return;
+            }
+            
+            try {
+                const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY,
+                        'X-Bin-Versioning': 'false'
+                    },
+                    body: JSON.stringify({
+                        messages: [],
+                        settings: {
+                            lastUpdate: Date.now(),
+                            messageCount: 0,
+                            version: "2.2"
+                        }
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    appState.messageCache = [];
+                    displayMessages([]);
+                    
+                    showNotification('Весь чат очищен', 'success');
+                    closeAdminModal();
+                }
+            } catch (error) {
+                console.error('Ошибка очистки чата:', error);
+                showNotification('Ошибка очистки чата', 'error');
+            }
         }
         
         function showNotification(message, type = 'info') {
@@ -1163,10 +1599,8 @@
                     const audioBlob = new Blob(appState.audioChunks, { type: 'audio/webm' });
                     await sendVoiceMessage(audioBlob);
                     
-                    // Останавливаем все треки
                     stream.getTracks().forEach(track => track.stop());
                     
-                    // Сбрасываем состояние
                     appState.isRecording = false;
                     document.getElementById('voiceBtn').classList.remove('recording');
                     document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-microphone"></i>';
@@ -1176,12 +1610,10 @@
                 appState.mediaRecorder.start();
                 appState.isRecording = true;
                 
-                // Обновляем UI
                 document.getElementById('voiceBtn').classList.add('recording');
                 document.getElementById('voiceBtn').innerHTML = '<i class="fas fa-stop"></i>';
                 document.getElementById('audioVisualizer').classList.add('show');
                 
-                // Анимация визуализатора
                 animateVisualizer();
                 
                 showNotification("Идет запись...", "info");
@@ -1214,11 +1646,10 @@
         async function sendVoiceMessage(audioBlob) {
             const duration = Date.now() - appState.recordingStartTime;
             
-            // Создаем временное голосовое сообщение
             const tempMessage = {
                 id: Date.now(),
                 type: 'voice',
-                duration: Math.floor(duration / 1000), // в секундах
+                duration: Math.floor(duration / 1000),
                 blobUrl: URL.createObjectURL(audioBlob),
                 user: appState.userName,
                 userId: appState.userId,
@@ -1227,19 +1658,16 @@
                 status: 'sending'
             };
             
-            // Добавляем в кэш
             appState.messageCache.push(tempMessage);
             displayMessages(appState.messageCache);
             
             try {
-                // Конвертируем в base64 для отправки
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 
                 reader.onloadend = async () => {
                     const base64Audio = reader.result;
                     
-                    // Загружаем текущие данные
                     const response = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}/latest`, {
                         headers: { 'X-Master-Key': API_KEY }
                     });
@@ -1247,17 +1675,12 @@
                     const data = await response.json();
                     let messages = data.record.messages || [];
                     
-                    // Обновляем статус
                     tempMessage.status = 'delivered';
                     tempMessage.audioData = base64Audio;
                     
-                    // Добавляем сообщение
                     messages.push(tempMessage);
-                    
-                    // Очищаем старые сообщения
                     messages = cleanupOldMessages(messages);
                     
-                    // Сохраняем на сервере
                     const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}`, {
                         method: 'PUT',
                         headers: {
@@ -1270,7 +1693,7 @@
                             settings: {
                                 lastUpdate: Date.now(),
                                 messageCount: messages.length,
-                                version: "2.1"
+                                version: "2.2"
                             }
                         })
                     });
@@ -1292,15 +1715,12 @@
             }
         }
         
-        // ===== УЛУЧШЕННАЯ ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ГОЛОСОВЫХ =====
         function playVoiceMessage(blobUrl, messageId) {
-            // Если уже воспроизводится это же сообщение - ставим на паузу
             if (appState.currentPlayingMessage === messageId && appState.currentAudio) {
                 appState.currentAudio.pause();
                 return;
             }
             
-            // Останавливаем текущее воспроизведение другого сообщения
             if (appState.currentAudio && appState.currentPlayingMessage !== messageId) {
                 appState.currentAudio.pause();
                 const prevBtn = document.querySelector(`[data-id="${appState.currentPlayingMessage}"] .voice-play-btn`);
@@ -1311,10 +1731,7 @@
                 }
             }
             
-            // Если сообщение уже воспроизводилось, продолжаем с того же места
             const currentTime = appState.audioProgress[messageId] || 0;
-            
-            // Создаем новый аудио объект
             const audio = new Audio(blobUrl);
             audio.currentTime = currentTime;
             appState.currentAudio = audio;
@@ -1327,8 +1744,6 @@
                 playBtn.classList.add('playing');
                 playBtn.innerHTML = '<i class="fas fa-pause"></i>';
                 animateVoiceWave(messageId, true);
-                
-                // Запускаем обновление прогресса
                 updateAudioProgress(messageId, audio, progressBar);
             };
             
@@ -1336,8 +1751,6 @@
                 playBtn.classList.remove('playing');
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
                 animateVoiceWave(messageId, false);
-                
-                // Сохраняем прогресс
                 appState.audioProgress[messageId] = audio.currentTime;
             };
             
@@ -1345,18 +1758,14 @@
                 playBtn.classList.remove('playing');
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
                 animateVoiceWave(messageId, false);
-                
-                // Сбрасываем прогресс
                 appState.audioProgress[messageId] = 0;
                 if (progressBar) {
                     progressBar.style.width = '0%';
                 }
-                
                 appState.currentAudio = null;
                 appState.currentPlayingMessage = null;
             };
             
-            // Начинаем воспроизведение
             audio.play();
         }
         
@@ -1369,7 +1778,6 @@
                     progressBar.style.width = percent + '%';
                 }
                 
-                // Сохраняем текущее время
                 appState.audioProgress[messageId] = audio.currentTime;
                 
                 if (!audio.ended && !audio.paused) {
@@ -1389,12 +1797,10 @@
             if (isPlaying) {
                 bars.forEach((bar, index) => {
                     bar.classList.add('active');
-                    // Создаем волну с разной амплитудой
                     const amplitude = Math.sin(Date.now() / 200 + index * 0.5) * 10 + 15;
                     bar.style.height = amplitude + 'px';
                 });
                 
-                // Продолжаем анимацию
                 setTimeout(() => animateVoiceWave(messageId, isPlaying), 100);
             } else {
                 bars.forEach(bar => {
@@ -1439,12 +1845,16 @@
                 const isOwn = msg.userId === appState.userId;
                 
                 if (msg.type === 'voice') {
-                    // Улучшенное голосовое сообщение
                     const isPlaying = appState.currentPlayingMessage === msg.id;
                     const playIcon = isPlaying ? 'fa-pause' : 'fa-play';
                     
                     html += `
-                        <div class="message ${isOwn ? 'own' : 'other'}" data-id="${msg.id}">
+                        <div class="message ${isOwn ? 'own' : 'other'} ${appState.adminMode ? 'admin-mode' : ''}" data-id="${msg.id}">
+                            ${appState.adminMode ? `
+                                <button class="message-delete-btn" onclick="deleteMessage(${msg.id})" title="Удалить сообщение">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
                             <div class="message-header">
                                 <span class="message-sender">${msg.user}</span>
                                 <span class="message-time">${formatTime(msg.timestamp)}</span>
@@ -1471,9 +1881,13 @@
                         </div>
                     `;
                 } else {
-                    // Текстовое сообщение
                     html += `
-                        <div class="message ${isOwn ? 'own' : 'other'}" data-id="${msg.id}">
+                        <div class="message ${isOwn ? 'own' : 'other'} ${appState.adminMode ? 'admin-mode' : ''}" data-id="${msg.id}">
+                            ${appState.adminMode ? `
+                                <button class="message-delete-btn" onclick="deleteMessage(${msg.id})" title="Удалить сообщение">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
                             <div class="message-header">
                                 <span class="message-sender">${msg.user}</span>
                                 <span class="message-time">${formatTime(msg.timestamp)}</span>
@@ -1525,7 +1939,6 @@
                 const data = await response.json();
                 let messages = data.record.messages || [];
                 
-                // Проверяем новые сообщения
                 const newMessages = messages.filter(msg => 
                     !appState.messageCache.some(cached => cached.id === msg.id)
                 );
@@ -1578,6 +1991,9 @@
             messageInput.value = '';
             displayMessages(appState.messageCache);
             
+            // Обновляем статус онлайн
+            updateOnlineStatus();
+            
             try {
                 const response = await fetch(`https://api.jsonbin.io/v3/b/${CHAT_BIN_ID}/latest`, {
                     headers: { 'X-Master-Key': API_KEY }
@@ -1602,7 +2018,7 @@
                         settings: {
                             lastUpdate: Date.now(),
                             messageCount: messages.length,
-                            version: "2.1"
+                            version: "2.2"
                         }
                     })
                 });
@@ -1736,6 +2152,11 @@
                 appState.theme = 'dark';
             }
             
+            // Настройка кнопки администратора
+            if (appState.isAdmin) {
+                document.getElementById('adminBtn').classList.add('admin-active');
+            }
+            
             // Загрузка кэша
             loadFromCache();
             
@@ -1758,9 +2179,37 @@
                     }
                 }
             }, 10 * 60 * 1000);
+            
+            // Следим за активностью пользователя
+            setupActivityTracking();
+        }
+        
+        function setupActivityTracking() {
+            // Обновляем статус при вводе текста
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('input', () => {
+                if (messageInput.value.trim().length > 0) {
+                    updateOnlineStatus();
+                }
+            });
+            
+            // Обновляем статус при нажатии на кнопки
+            document.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.id !== 'voiceBtn' || !appState.isRecording) {
+                        updateOnlineStatus();
+                    }
+                });
+            });
+            
+            // Обновляем статус при скролле
+            document.getElementById('messagesArea').addEventListener('scroll', updateOnlineStatus);
         }
         
         function setupEventListeners() {
+            // Администратор
+            document.getElementById('adminBtn').addEventListener('click', showAdminModal);
+            
             // Отправка сообщения
             document.getElementById('sendBtn').addEventListener('click', sendMessage);
             
@@ -1786,7 +2235,6 @@
                 }
             });
             
-            // Для сенсорных устройств
             voiceBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 pressTimer = setTimeout(startRecording, 500);
@@ -1826,7 +2274,13 @@
                 });
             });
             
-            // Клик вне модального окна
+            // Клик вне модальных окон
+            document.getElementById('adminModal').addEventListener('click', (e) => {
+                if (e.target.id === 'adminModal') {
+                    closeAdminModal();
+                }
+            });
+            
             document.getElementById('settingsModal').addEventListener('click', (e) => {
                 if (e.target.id === 'settingsModal') {
                     closeSettings();
