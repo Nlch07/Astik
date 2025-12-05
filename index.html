@@ -1389,40 +1389,98 @@
             document.getElementById('adminModal').classList.remove('show');
         }
         
-        function loginAdmin() {
-            const password = document.getElementById('adminPassword').value;
-            const adminStatus = document.getElementById('adminStatus');
-            
-            if (password === ADMIN_PASSWORD) {
-                appState.isAdmin = true;
-                localStorage.setItem('isAdmin', 'true');
-                
-                adminStatus.textContent = '✓ Доступ администратора предоставлен!';
-                adminStatus.className = 'admin-status success';
-                adminStatus.style.display = 'block';
-                
-                document.getElementById('adminLoginForm').style.display = 'none';
-                document.getElementById('adminControls').style.display = 'block';
-                
-                // Обновляем кнопку в хедере
-                document.getElementById('adminBtn').classList.add('admin-active');
-                
-                setTimeout(() => {
-                    showNotification('Режим администратора активирован', 'success');
-                }, 300);
-            } else {
-                adminStatus.textContent = '✗ Неверный пароль!';
-                adminStatus.className = 'admin-status error';
-                adminStatus.style.display = 'block';
-                
-                // Анимация ошибки
-                const input = document.getElementById('adminPassword');
-                input.style.borderColor = 'var(--error)';
-                setTimeout(() => {
-                    input.style.borderColor = '';
-                }, 500);
-            }
+        // Убираем сохранение в localStorage при логине
+function loginAdmin() {
+    const password = document.getElementById('adminPassword').value;
+    const adminStatus = document.getElementById('adminStatus');
+    
+    if (password === ADMIN_PASSWORD) {
+        appState.isAdmin = true;
+        // УБИРАЕМ ЭТУ СТРОКУ: localStorage.setItem('isAdmin', 'true');
+        
+        adminStatus.textContent = '✓ Доступ администратора предоставлен!';
+        adminStatus.className = 'admin-status success';
+        adminStatus.style.display = 'block';
+        
+        document.getElementById('adminLoginForm').style.display = 'none';
+        document.getElementById('adminControls').style.display = 'block';
+        
+        document.getElementById('adminBtn').classList.add('admin-active');
+        
+        setTimeout(() => {
+            showNotification('Режим администратора активирован', 'success');
+        }, 300);
+    } else {
+        adminStatus.textContent = '✗ Неверный пароль!';
+        adminStatus.className = 'admin-status error';
+        adminStatus.style.display = 'block';
+        
+        const input = document.getElementById('adminPassword');
+        input.style.borderColor = 'var(--error)';
+        setTimeout(() => {
+            input.style.borderColor = '';
+        }, 500);
+    }
+}
+
+// Функция выхода из админки
+function logoutAdmin() {
+    appState.isAdmin = false;
+    // УБИРАЕМ ЭТУ СТРОКУ: localStorage.removeItem('isAdmin');
+    
+    // Скрываем панель администратора
+    document.getElementById('adminControls').style.display = 'none';
+    document.getElementById('adminLoginForm').style.display = 'block';
+    
+    // Сбрасываем форму
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminStatus').style.display = 'none';
+    
+    // Обновляем кнопку в хедере
+    document.getElementById('adminBtn').classList.remove('admin-active');
+    
+    showNotification('Режим администратора отключен', 'info');
+}
+
+// Изменяем функцию проверки состояния админки
+function checkAdminState() {
+    // Всегда начинаем с неактивного состояния
+    if (appState.isAdmin) {
+        document.getElementById('adminControls').style.display = 'block';
+        document.getElementById('adminLoginForm').style.display = 'none';
+        document.getElementById('adminBtn').classList.add('admin-active');
+    } else {
+        document.getElementById('adminControls').style.display = 'none';
+        document.getElementById('adminLoginForm').style.display = 'block';
+        document.getElementById('adminBtn').classList.remove('admin-active');
+    }
+}
+
+// Обновляем обработчик открытия админки
+document.getElementById('adminBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Если уже админ - предлагаем выйти
+    if (appState.isAdmin) {
+        if (confirm('Выйти из режима администратора?')) {
+            logoutAdmin();
         }
+        return;
+    }
+    
+    // Иначе показываем форму входа
+    showAdminPanel();
+});
+
+// Функция показа панели администратора
+function showAdminPanel() {
+    // Сбрасываем форму при каждом открытии
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminStatus').style.display = 'none';
+    
+    // Показываем панель (ваш существующий код)
+    // ... остальной код для показа панели ...
+}
         
         function toggleAdminMode() {
             appState.adminMode = !appState.adminMode;
